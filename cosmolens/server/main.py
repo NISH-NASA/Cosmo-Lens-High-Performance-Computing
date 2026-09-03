@@ -5,7 +5,7 @@ FastAPI Server for CosmoLens HPC: Astronomical Processing & AI Discovery Engine.
 import os
 import base64
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
@@ -17,11 +17,19 @@ from cosmolens.ai.discovery_report import generate_apj_discovery_memo
 from cosmolens.ai.natural_search import search_sky_catalog
 from cosmolens.hpc.mast_fetcher import search_and_fetch_target
 
+# Database imports
+from sqlalchemy.orm import Session
+from cosmolens.server import models, database
+from cosmolens.server.database import get_db
+
 app = FastAPI(
     title="CosmoLens HPC",
     description="High-Performance JWST Deep-Field Processing & Gravitational Lens Discovery Engine",
     version="1.0.0"
 )
+
+# Create the SQLite database tables
+models.Base.metadata.create_all(bind=database.engine)
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
@@ -38,6 +46,15 @@ class MastFetchRequest(BaseModel):
 
 class GeminiKeyRequest(BaseModel):
     api_key: str
+
+
+class DiscoveryCreate(BaseModel):
+    target_name: str
+    ra: float
+    dec: float
+    classification: str
+    report_text: str
+    image_url: str = None
 
 
 class NaturalSearchRequest(BaseModel):
@@ -274,6 +291,24 @@ def update_gemini_key(req: GeminiKeyRequest):
         "model": agent.model_name
     }
 
+
+# --- Database Endpoints ---
+
+@app.post("/api/discoveries", tags=["Database"])
+def save_discovery(discovery: DiscoveryCreate, db: Session = Depends(get_db)):
+    """Saves a new AI discovery to the database."""
+    db_discovery = models.Discovery(**discovery.dict())
+    db.add(db_discovery)
+    db.commit()
+    db.refresh(db_discovery)
+    return {"status": "success", "discovery_id": db_discovery.id}
+
+
+@app.get("/api/discoveries", tags=["Database"])
+def get_discoveries(limit: int = 50, db: Session = Depends(get_db)):
+    """Retrieves all past discoveries from the database."""
+    discoveries = db.query(models.Discovery).order_by(models.Discovery.created_at.desc()).limit(limit).all()
+    return discoveries
 
 # Mount static assets
 if STATIC_DIR.exists():

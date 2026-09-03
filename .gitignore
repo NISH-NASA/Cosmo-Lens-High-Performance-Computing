@@ -43,3 +43,8 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Database
+*.db
+cosmolens.db
+sqlite3.db
