@@ -1,11 +1,11 @@
-# 🌌 CosmoLens HPC: Autonomous JWST Deep-Field Processing & Gravitational Lens Discovery Engine
+# CosmoLens HPC: Autonomous JWST Deep-Field Processing & Gravitational Lens Discovery Engine
 
 > **Built for MLH Hackathon with Google Gemini 2.0 API**  
 > *Pairing High-Performance Computing (HPC) with Gemini Multimodal AI to detect Einstein rings, gravitationally lensed arcs, and primeval galaxies in James Webb Space Telescope observations.*
 
 ---
 
-## 🚀 Overview
+##  Overview
 
 The **James Webb Space Telescope (JWST)** produces unprecedented gigapixel deep-field infrared observations of massive galaxy clusters like **SMACS J0723.3-7327**. These images contain hundreds of thousands of celestial objects and rare cosmological phenomena:
 - **Strong Gravitational Lenses (Einstein Rings & Arcs)**: Distant background galaxies magnified and sheared into curves by the cluster's intense gravitational well.
@@ -21,7 +21,7 @@ Standard manual inspection and classical astronomy pipelines struggle with the s
 
 ---
 
-## 🏛️ System Architecture
+##  System Architecture
 
 ```
                        ┌────────────────────────────────────────┐
@@ -62,7 +62,7 @@ Standard manual inspection and classical astronomy pipelines struggle with the s
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ### 1. Requirements
 - Python 3.10+
@@ -78,7 +78,7 @@ PORT=8000 python3 main.py
 ```
 
 Open your browser to:
-👉 **`http://localhost:8000`**
+**`http://localhost:8000`**
 
 ### 3. (Optional) Configure Gemini API Key
 You can pass your Gemini API key in the environment:
@@ -90,7 +90,7 @@ python3 main.py
 
 ---
 
-## 🔬 Hackathon Pitch & Demo Walkthrough
+##  Hackathon Pitch & Demo Walkthrough
 
 When presenting to judges, follow this 4-step sequence:
 
@@ -119,7 +119,7 @@ When presenting to judges, follow this 4-step sequence:
 
 ---
 
-## 🧪 Running the Test Suite
+##  Running the Test Suite
 
 ```bash
 python3 -m unittest discover -s tests
