@@ -9,7 +9,7 @@ class Discovery(Base):
     """
     __tablename__ = "discoveries"
 
-    id = Column(Integer, primary key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     target_name = Column(String, index=True)      # e.g., "SMACS 0723"
     ra = Column(Float)                            # Right Ascension
     dec = Column(Float)                           # Declination
