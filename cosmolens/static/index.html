@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CosmoLens HPC — JWST Deep-Field & Gravitational Lens Discovery Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Header / Mission Control Bar -->
+  <header class="top-nav">
+    <div class="brand">
+      <div class="brand-icon">
+        <i data-lucide="orbit"></i>
+      </div>
+      <div class="brand-text">
+        <h1>CosmoLens <span class="badge-hpc">HPC</span></h1>
+        <span class="sub-brand">JWST Deep-Field Analyzer &bull; Gemini 2.0 AI</span>
+      </div>
+    </div>
+
+    <!-- Sky Search Bar -->
+    <div class="search-container">
+      <i data-lucide="sparkles" class="search-icon"></i>
+      <input type="text" id="semanticSearchInput" placeholder="Semantic sky search (e.g. 'distorted arcs near cluster core' or 'colliding galaxies')...">
+      <button id="searchBtn" title="Run Semantic Search">Query Sky</button>
+    </div>
+
+    <!-- Actions & Status -->
+    <div class="nav-actions">
+      <button id="runHpcBtn" class="btn btn-primary">
+        <i data-lucide="cpu"></i>
+        <span>Run HPC Pipeline</span>
+      </button>
+
+      <button id="batchClassifyBtn" class="btn btn-secondary" title="Batch classify candidate phenomena with Gemini">
+        <i data-lucide="bot"></i>
+        <span>Gemini Classify</span>
+      </button>
+
+      <button id="configKeyBtn" class="btn btn-outline" title="Configure Gemini API Key">
+        <i data-lucide="key"></i>
+        <span id="keyStatusText">API Key</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Grid Layout -->
+  <div class="main-layout">
+    <!-- Left Sidebar: HPC Telemetry & Object Catalog -->
+    <aside class="sidebar-left">
+      <!-- HPC Telemetry Card -->
+      <div class="panel telemetry-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i data-lucide="activity"></i>
+            <span>HPC Telemetry</span>
+          </div>
+          <span class="live-dot" title="HPC Engine Ready"></span>
+        </div>
+
+        <div class="telemetry-grid">
+          <div class="telemetry-card">
+            <span class="t-label">Throughput</span>
+            <span class="t-val text-cyan" id="tThroughput">-- Mpix/s</span>
+          </div>
+          <div class="telemetry-card">
+            <span class="t-label">Wall Latency</span>
+            <span class="t-val text-amber" id="tLatency">-- ms</span>
+          </div>
+          <div class="telemetry-card">
+            <span class="t-label">Active Cores</span>
+            <span class="t-val text-green" id="tCores">-- CPU</span>
+          </div>
+          <div class="telemetry-card">
+            <span class="t-label">Extraction Rate</span>
+            <span class="t-val text-gold" id="tExtractionRate">-- obj/s</span>
+          </div>
+        </div>
+
+        <div class="memory-bar-wrapper">
+          <div class="bar-header">
+            <span>RAM Utilization</span>
+            <span id="tMem">-- MB</span>
+          </div>
+          <div class="progress-bg">
+            <div class="progress-fill" id="tMemBar" style="width: 25%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="filter-section">
+        <div class="filter-title">Morphology Classification</div>
+        <div class="chips-row">
+          <button class="chip active" data-filter="ALL">All (<span id="countAll">0</span>)</button>
+          <button class="chip chip-gold" data-filter="LENS">Einstein Arcs (<span id="countLens">0</span>)</button>
+          <button class="chip chip-magenta" data-filter="MERGER">Mergers (<span id="countMerger">0</span>)</button>
+          <button class="chip chip-cyan" data-filter="HIGHZ">High-z (<span id="countHighz">0</span>)</button>
+          <button class="chip chip-gray" data-filter="OTHER">Other (<span id="countOther">0</span>)</button>
+        </div>
+      </div>
+
+      <!-- Candidate Catalog List -->
+      <div class="panel catalog-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i data-lucide="layers"></i>
+            <span>Celestial Catalog</span>
+          </div>
+          <span class="badge" id="catalogCount">0 Objects</span>
+        </div>
+        <div class="catalog-list" id="catalogList">
+          <!-- Dynamically populated -->
+          <div class="empty-state">
+            <i data-lucide="loader-2" class="spin"></i>
+            <p>Initializing HPC pipeline...</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center: Interactive Deep Field Viewport -->
+    <main class="viewport-center">
+      <div class="canvas-container" id="canvasContainer">
+        <canvas id="deepFieldCanvas"></canvas>
+
+        <!-- Dynamic Coordinates HUD Overlay -->
+        <div class="coords-hud">
+          <span id="hudCoords">RA: 07h23m19.4s &bull; Dec: -73°27'15.0"</span>
+          <span id="hudZoom">Zoom: 100%</span>
+        </div>
+
+        <!-- Viewport Controls -->
+        <div class="viewport-controls">
+          <button id="zoomInBtn" title="Zoom In"><i data-lucide="zoom-in"></i></button>
+          <button id="zoomOutBtn" title="Zoom Out"><i data-lucide="zoom-out"></i></button>
+          <button id="resetViewBtn" title="Reset Viewport"><i data-lucide="maximize"></i></button>
+          <button id="toggleBoxesBtn" class="active" title="Toggle Detection Boxes"><i data-lucide="scan"></i></button>
+          <button id="toggleGridBtn" class="active" title="Toggle WCS Celestial Grid"><i data-lucide="grid"></i></button>
+        </div>
+
+        <!-- Legend Overlay -->
+        <div class="legend-hud">
+          <div class="legend-item"><span class="dot dot-gold"></span> Einstein Arc / Lens</div>
+          <div class="legend-item"><span class="dot dot-magenta"></span> Tidal Galaxy Merger</div>
+          <div class="legend-item"><span class="dot dot-cyan"></span> High-z Dropout</div>
+          <div class="legend-item"><span class="dot dot-blue"></span> Cluster Member</div>
+          <div class="legend-item"><span class="dot dot-red"></span> Star / Spike</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Sidebar: Galaxy Inspector & Gemini AI Panel -->
+    <aside class="sidebar-right">
+      <div class="panel inspector-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i data-lucide="crosshair"></i>
+            <span>Galaxy Inspector</span>
+          </div>
+          <span class="badge badge-target" id="inspectId">SELECT OBJECT</span>
+        </div>
+
+        <!-- Source Cutout & Metadata -->
+        <div class="inspector-body" id="inspectorBody">
+          <div class="no-selection">
+            <i data-lucide="telescope"></i>
+            <p>Click any galaxy or bounding box in the deep field to inspect its morphology and run Gemini AI analysis.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- API Key Modal -->
+  <div class="modal-overlay" id="keyModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="panel-title">
+          <i data-lucide="key"></i>
+          <span>Gemini 2.0 API Configuration</span>
+        </div>
+        <button class="close-btn" id="closeKeyModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>CosmoLens HPC supports <strong>Gemini 2.5 Flash</strong> for real-time multimodal astrophysical reasoning. Enter your Gemini API key below:</p>
+        <div class="input-group">
+          <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy...">
+          <button id="saveKeyBtn" class="btn btn-primary">Save Key</button>
+        </div>
+        <div class="key-note">
+          <i data-lucide="info"></i>
+          <span>If no key is entered, CosmoLens automatically runs in calibrated scientific simulation mode with full morphological inference.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Discovery Memo Modal -->
+  <div class="modal-overlay" id="reportModal">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <div class="panel-title">
+          <i data-lucide="file-text"></i>
+          <span id="reportModalTitle">Astrophysical Journal (ApJ) Discovery Memorandum</span>
+        </div>
+        <div class="modal-actions">
+          <button id="copyMemoBtn" class="btn btn-outline btn-sm"><i data-lucide="copy"></i> Copy Markdown</button>
+          <button class="close-btn" id="closeReportModal">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body report-content" id="reportContent">
+        <!-- Rendered markdown memo -->
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
