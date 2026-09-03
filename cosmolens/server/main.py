@@ -6,6 +6,7 @@ import os
 import base64
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
@@ -26,6 +27,15 @@ app = FastAPI(
     title="CosmoLens HPC",
     description="High-Performance JWST Deep-Field Processing & Gravitational Lens Discovery Engine",
     version="1.0.0"
+)
+
+# --- Add CORS Middleware for separate Frontend Teams ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins (perfect for hackathons)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
 )
 
 # Create the SQLite database tables
